@@ -1,57 +1,69 @@
-﻿using JwtAuthsApi.Models;
+﻿using System.Web.Http.ModelBinding;
+using JwtAuthsApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JwtAuthsApi.Services;
 
-public class UserAuthenticationService : Exception, IUserAuthentication
+public class UserAuthenticationService :  IUserAuthentication
 {
-    private readonly SignInManager<Login> _signInManager;
-    private readonly UserManager<UserRegister> _userManager;
+    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly UserManager<IdentityUser> _userManager;
 
-    public UserAuthenticationService(SignInManager<Login> signInManager,
-        UserManager<UserRegister> userManager, ApplicationDbContext? applicationDbContext)
+    public UserAuthenticationService(SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager )
     {
         _signInManager = signInManager;
         _userManager = userManager;
     }
-
-    public IActionResult Login(Login loginUser)
+   
+    public  IActionResult Login(Login loginUser)
     {
-        var user = new Login
-        {
-            UserName = loginUser.UserName,
-            Password = loginUser.Password
-        };
-        var userFind = _signInManager.UserManager.FindByNameAsync(user.UserName).Result;
-        if (userFind == null)
-            return new BadRequestObjectResult(new
-                { Status = "Error", Message = "User Not Found Please Register First !" });
-        
-
-            var result = _signInManager.PasswordSignInAsync(user, user.Password, false, false).Result;
-            if (result.Succeeded)
-                return new OkObjectResult(new { Status = "Success", Message = "User Login Successfully", loginUser });
-            
-
-        return new BadRequestObjectResult(new { Status = "Error", Message = "User Not Found Please Register First !" });
-        
-
+        var logins =  _userManager.FindByNameAsync(loginUser.UserName).Result;
+      if (logins == null)
+      {
+            return new UnauthorizedObjectResult(new { Status = "Error", Message = "User is not registered " });
+      } 
+      var result =  _signInManager.PasswordSignInAsync(loginUser.UserName, loginUser.Password, false, false).Result;
+      if (result.Succeeded)
+      {
+            return new OkObjectResult(new { Status = "Success", Message = "User Logged In Successfully", loginUser });
+      }
+      return new BadRequestObjectResult(new { Status = "Error", Message = "User Login Failed", loginUser });
     }
 
     public IActionResult Register(UserRegister register)
     {
-        var user = new UserRegister
+        try
         {
-            UserName = register.UserName,
-            Email = register.Email,
-            FirstName = register.FirstName,
-            LastName = register.LastName,
-            Password = register.Password
-        };
-        var result = _userManager.CreateAsync(user, register.Password).Result;
-        if (result.Succeeded)
-            return new OkObjectResult(new { Status = "Success", Message = "User Created Successfully", register });
-        return new BadRequestObjectResult(new { Status = "Error", Message = "User Creation Failed", register });
+            var user = new UserRegister
+            {
+                UserName = register.UserName,
+                Email = register.Email,
+                FirstName = register.FirstName,
+                LastName = register.LastName,
+                Password = register.Password
+            };
+            if (user.UserName == null)
+            {
+                return new BadRequestObjectResult(new { Status = "Error", Message = "User cannot be null here " });
+            }
+
+            var checkuserAlreadyRegistered = _signInManager.UserManager.FindByNameAsync(user.UserName).Result;
+            if (checkuserAlreadyRegistered != null)
+            {
+                return new UnauthorizedObjectResult(new
+                    { Status = "Error", Message = "User is already registered ", user.UserName });
+            }
+
+            var result = _userManager.CreateAsync(user, register.Password).Result;
+            if (result.Succeeded)
+                return new OkObjectResult(new { Status = "Success", Message = "User Created Successfully", register });
+            return new BadRequestObjectResult(new { Status = "Error", Message = "User Creation Failed", register,result });
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
     }
 }

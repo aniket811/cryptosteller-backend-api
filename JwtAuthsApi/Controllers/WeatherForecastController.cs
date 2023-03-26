@@ -1,9 +1,12 @@
+using JwtAuthsApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JwtAuthsApi.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    
+    [Route("[controller]/[action]")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -12,9 +15,11 @@ namespace JwtAuthsApi.Controllers
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger,ApplicationDbContext context)
         {
+            _context = context;
             _logger = logger;
         }
 
@@ -28,6 +33,22 @@ namespace JwtAuthsApi.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+        /*<summary>Method to get the weather forecast 
+          for a particular city name and save it to database.</summary>
+         */
+        [HttpPost]
+        public IActionResult Post( WeatherForecastModel weatherForecast)
+        {
+            Guid gid = Guid.NewGuid();
+            var weathers = new WeatherForecastModel()
+            {
+                Id=gid,
+                CityName=weatherForecast.CityName
+            };
+            _context.WeatherForecasts.Add(weathers);
+            _context.SaveChanges();
+            return Ok(weatherForecast);
         }
     }
 }

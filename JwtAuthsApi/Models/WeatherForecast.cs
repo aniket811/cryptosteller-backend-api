@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JwtAuthsApi.Models
 {
-    [Table("Weathers")]
-    public class Weather
+    public class WeatherForecastModel
     {
         [Key]
+        public Guid Id { get; set; }
         public string CityName { get; set; }
     }
 }

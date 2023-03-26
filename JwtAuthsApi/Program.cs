@@ -13,7 +13,10 @@ namespace JwtAuthsApi
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            builder.Services.AddCors(opt => opt.AddPolicy("CorsPolicy", policy =>
+            {
+                policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+            }));
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -22,28 +25,25 @@ namespace JwtAuthsApi
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Env"));
             })
-           .AddIdentity<UserRegister, IdentityRole>()
+           .AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
             builder.Services.AddLogging();
              builder.Services.AddScoped<IUserAuthentication, UserAuthenticationService>(option =>
             {
                 option.GetService<SignInManager<IdentityUser>>();
-                option.GetService<UserManager<UserRegister>>();
-                option.GetService<ApplicationDbContext>();
-                return new UserAuthenticationService(option.GetService<SignInManager<Login>>(), option.GetService<UserManager<UserRegister>>(), option.GetService<ApplicationDbContext>());
+                option.GetService<UserManager<IdentityUser>>();
+                return new UserAuthenticationService(option.GetService<SignInManager<IdentityUser>>(), option.GetService<UserManager<IdentityUser>>());
             });
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
+          
                 
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
-            app.UseHttpsRedirection();
             
+            app.UseHttpsRedirection();
+            app.UseCors("CorsPolicy");
             app.UseAuthentication();
             app.UseAuthorization();
 

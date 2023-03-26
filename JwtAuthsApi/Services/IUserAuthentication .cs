@@ -5,7 +5,7 @@ namespace JwtAuthsApi.Services
     public interface IUserAuthentication
     {
         public IActionResult Register(UserRegister user);
-        public IActionResult  Login(Login loginUser);
+        public   IActionResult  Login(Login loginUser);
 
     }
 }

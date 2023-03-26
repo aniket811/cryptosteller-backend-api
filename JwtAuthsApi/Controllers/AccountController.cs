@@ -1,12 +1,15 @@
 ﻿using System.Web.Http;
 using JwtAuthsApi.Models;
 using JwtAuthsApi.Services;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JwtAuthsApi.Controllers
 {
+    [EnableCors("CorsPolicy")]
     [Microsoft.AspNetCore.Mvc.Route("api/[controller]/[action]")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -20,41 +23,24 @@ namespace JwtAuthsApi.Controllers
             _service = service;
         }
         [Microsoft.AspNetCore.Mvc.HttpPost]
-        public IActionResult Register([Microsoft.AspNetCore.Mvc.FromBody]UserRegister register)
+        public IActionResult Register(UserRegister register)
         {
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            try
-            {
                 _service.Register(register);
                 return Ok(register);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            
         }
-
         [Microsoft.AspNetCore.Mvc.HttpPost]
-        public IActionResult Login([Microsoft.AspNetCore.Mvc.FromBody] Login loginUser)
+        public IActionResult Login(Login loginUser)
         {
-            if (!ModelState.IsValid)
+            if(!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-
-            try
-            {
-                _service.Login(loginUser);
-                return Ok(loginUser);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+                return  _service.Login(loginUser);
         }
 
     }
